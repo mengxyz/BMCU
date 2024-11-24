@@ -7,10 +7,11 @@ BMCU以四通道为一个单位，目前以CH32单片机为主控设计。其设
 #### 使用说明及安装教程
 
  **1.  制造所需资料见BMCU整合打包文件** 
+BMCU打包文件目前发布在群内，或可以从[https://oshwhub.com/bamboo-shoot-xmcu-pcb-team/bmcu](https://oshwhub.com/bamboo-shoot-xmcu-pcb-team/bmcu)的附件部分，找到V1.1版打包文件。
 
  **2.  所需刷写的固件见release** 
 
- **3.  安装说明暂无，后续推出** 
+ **3.  安装教程暂无，后续推出** 
 
 #### 软件架构
 主要文件：
