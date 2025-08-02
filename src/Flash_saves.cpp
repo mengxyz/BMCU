@@ -37,7 +37,7 @@ bool Flash_saves(void *buf, uint32_t length, uint32_t address)
     uint32_t erase_counter = 0;
     uint32_t address_i = 0;
     uint32_t page_num = length / FLASH_PAGE_SIZE;
-    uint16_t *data_ptr=(uint16_t *)buf;
+    uint16_t *data_ptr = (uint16_t *)buf;
 
     __disable_irq(); // 禁用中断
     FLASH_Unlock();
@@ -62,22 +62,22 @@ bool Flash_saves(void *buf, uint32_t length, uint32_t address)
 
     FLASH_Lock();
     __enable_irq();
-/*
-    address_i = address;
-    data_ptr=(uint16_t *)buf;
-    while ((address_i < end_address) && (MemoryProgramStatus != FAILED))
-    {
-        if ((*(__IO uint16_t *)address_i) != *data_ptr)
+    /*
+        address_i = address;
+        data_ptr=(uint16_t *)buf;
+        while ((address_i < end_address) && (MemoryProgramStatus != FAILED))
         {
-            MemoryProgramStatus = FAILED;
+            if ((*(__IO uint16_t *)address_i) != *data_ptr)
+            {
+                MemoryProgramStatus = FAILED;
+            }
+            address_i += 2;
+            data_ptr++;
         }
-        address_i += 2;
-        data_ptr++;
-    }
 
-    if (MemoryProgramStatus == FAILED)
-        return false;
-    else
-        return true;*/
+        if (MemoryProgramStatus == FAILED)
+            return false;
+        else
+            return true;*/
     return true;
 }

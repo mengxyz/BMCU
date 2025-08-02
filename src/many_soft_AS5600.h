@@ -6,24 +6,25 @@ class AS5600_soft_IIC_many
 public:
     AS5600_soft_IIC_many();
     ~AS5600_soft_IIC_many();
-    void init(uint32_t* GPIO_SCL, uint32_t* GPIO_SDA,int num);
+    void init(uint32_t *GPIO_SCL, uint32_t *GPIO_SDA, int num);
 
-    
     bool *online;
     enum _AS5600_magnet_stu
     {
-        low=1,
-        high=2,
-        offline=-1,
-        normal=0
-    }*magnet_stu;
+        low = 1,
+        high = 2,
+        offline = -1,
+        normal = 0
+    } *
+        magnet_stu;
     uint16_t *raw_angle;
 
     void updata_stu();
     void updata_angle();
-    int numbers;uint16_t *data;
-private:
+    int numbers;
+    uint16_t *data;
 
+private:
     int *error;
     uint32_t *IO_SDA;
     uint32_t *IO_SCL;
@@ -31,7 +32,7 @@ private:
     uint16_t *pin_SDA;
     GPIO_TypeDef **port_SCL;
     uint16_t *pin_SCL;
-    
+
     void init_iic();
     void start_iic(unsigned char ADR);
     void stop_iic();

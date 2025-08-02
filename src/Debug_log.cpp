@@ -3,20 +3,18 @@
 
 #ifdef Debug_log_on
 uint32_t stack[1000];
-//mbed::Timer USB_debug_timer;
+// mbed::Timer USB_debug_timer;
 DMA_InitTypeDef Debug_log_DMA_InitStructure;
-
 
 void Debug_log_init()
 {
 
-
-    GPIO_InitTypeDef  GPIO_InitStructure = {0};
+    GPIO_InitTypeDef GPIO_InitStructure = {0};
     USART_InitTypeDef USART_InitStructure = {0};
-    NVIC_InitTypeDef  NVIC_InitStructure = {0};
+    NVIC_InitTypeDef NVIC_InitStructure = {0};
 
-    RCC_APB1PeriphClockCmd( RCC_APB1Periph_USART3, ENABLE);
-    RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOB, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
     // USART3 TX-->B.10  RX-->B.11
@@ -27,7 +25,6 @@ void Debug_log_init()
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
-
 
     USART_InitStructure.USART_BaudRate = Debug_log_baudrate;
     USART_InitStructure.USART_WordLength = USART_WordLength_9b;
@@ -59,8 +56,6 @@ void Debug_log_init()
     Debug_log_DMA_InitStructure.DMA_BufferSize = 0;
 
     USART_Cmd(USART3, ENABLE);
-
-
 }
 
 uint64_t Debug_log_count64()
@@ -70,15 +65,13 @@ uint64_t Debug_log_count64()
 
 void Debug_log_time()
 {
-
 }
 
 void Debug_log_write(const void *data)
 {
 
-    int i = strlen((const char*)data);
-    Debug_log_write_num((const char*)data,i);
-
+    int i = strlen((const char *)data);
+    Debug_log_write_num((const char *)data, i);
 }
 
 void Debug_log_write_num(const void *data, int num)
@@ -93,14 +86,13 @@ void Debug_log_write_num(const void *data, int num)
     USART_DMACmd(USART3, USART_DMAReq_Tx, ENABLE);
 }
 
-
 void USART3_IRQHandler(void)
 {
     if (USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
     {
-        //uint8_t x = 
+        // uint8_t x =
         USART_ReceiveData(USART3);
-        //USART_SendData(USART3, x);
+        // USART_SendData(USART3, x);
     }
 }
 

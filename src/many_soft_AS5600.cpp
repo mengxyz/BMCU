@@ -18,9 +18,9 @@
                 port[i]->BCR = pin[i];     \
         }                                  \
     }
-#define iic_delay()           \
-    {                         \
-        delayMicroseconds(3); \
+#define iic_delay()            \
+    {                          \
+        delayMicroseconds(10); \
     }
 
 // address
@@ -132,11 +132,10 @@ void AS5600_soft_IIC_many::updata_angle()
         }
         else
         {
-            raw_angle[i]=0;
+            raw_angle[i] = 0;
             online[i] = false;
         }
     }
-    
 }
 void AS5600_soft_IIC_many::init_iic()
 {
@@ -198,7 +197,7 @@ void AS5600_soft_IIC_many::read_iic(bool ack)
 
     for (int i = 0; i < 8; i++)
     {
-        
+
         iic_delay();
         SET_H(port_SCL, pin_SCL);
         iic_delay();
@@ -236,8 +235,10 @@ void AS5600_soft_IIC_many::wait_ack_iic()
     iic_delay();
     for (auto i = 0; i < numbers; i++)
     {
+        pinMode(IO_SDA[i], INPUT_PULLUP);
         if (port_SDA[i]->INDR & pin_SDA[i])
             error[i] = 1;
+        pinMode(IO_SDA[i], OUTPUT_OD);
     }
     SET_L(port_SCL, pin_SCL);
     return;
