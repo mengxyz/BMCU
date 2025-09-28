@@ -2,9 +2,8 @@ name: Build Firmware
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-  workflow_dispatch:
+    tags:
+      - "v*"   # only on tags
 
 jobs:
   build:
@@ -15,22 +14,31 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        with:
+          fetch-depth: 0   # important: fetch all tags
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - run: pip install platformio
 
-      - name: Get version
-        run: echo "VERSION=v${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+      - name: Get latest tag
+        id: get_version
+        run: |
+          git fetch --tags
+          VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build ${{ matrix.env }}
         run: |
-          pio run -e ${{ matrix.env }} --target clean
           pio run -e ${{ matrix.env }}
           cp .pio/build/${{ matrix.env }}/firmware.bin fw-${{ matrix.env }}-${VERSION}.bin
 
-      - name: Upload artifact ${{ matrix.env }}
-        uses: actions/upload-artifact@v4
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: ${{ matrix.env }}
-          path: fw-${{ matrix.env }}-${{ env.VERSION }}.bin
+          files: fw-${{ matrix.env }}-${VERSION}.bin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
