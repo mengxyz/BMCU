@@ -1,4 +1,4 @@
-#include "WS2812.h"
+#include "ws2812.h"
 #include <stdlib.h>
 
 #define RGB_H() port->BSHR = pin
