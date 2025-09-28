@@ -23,23 +23,15 @@ jobs:
         run: pip install platformio
 
       - name: Get version
-        id: vars
-        run: |
-          # Use run_number as default version
-          echo "VERSION=v${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-          # If you prefer tags, uncomment below and push tags as releases
-          # if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-          #   echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          # fi
+        run: echo "VERSION=v${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
       - name: Build all firmware variants
         run: |
           mkdir out
           for env in fw-INT-A fw-EXT-A fw-INT-B fw-EXT-B fw-INT-C fw-EXT-C fw-INT-D fw-EXT-D; do
-            echo "🔨 Building $env with version $VERSION"
+            echo "🔨 Building $env"
             pio run -e $env --target clean
-            pio run -e $env --silent \
-              --project-option="build_flags=-DVERSION_STR=\"${VERSION}\""
+            pio run -e $env --silent
             cp .pio/build/$env/firmware.bin out/fw-${env}-${VERSION}.bin
           done
 
