@@ -4,10 +4,14 @@
 CRC16 crc_16;
 CRC8 crc_8;
 
+#ifndef BAMBU_BUS_AMS_NUM
+#define BAMBU_BUS_AMS_NUM 0
+#endif
+
 uint8_t BambuBus_data_buf[1000];
 int BambuBus_have_data = 0;
 uint16_t BambuBus_address = 0;
-uint8_t BambuBus_AMS_num = 0; // 0~3 代表被识别为 A B C D
+uint8_t BambuBus_AMS_num = BAMBU_BUS_AMS_NUM; // 0~3 代表被识别为 A B C D
 uint8_t AMS_humidity_wet = 12; // 0~100(百分比湿度)
 
 struct _filament
@@ -1092,10 +1096,22 @@ void send_for_long_packge_serial_number(unsigned char *buf, int length)
     Bambubus_long_package_send(&data);
 }
 
-unsigned char long_packge_version_version_and_name_AMS_lite[] = {0x5E, 0x07, 0x00, 0x00, // version number (00.00.07.94)
-                                                                 0x41, 0x4D, 0x53, 0x5F, 0x46, 0x31, 0x30, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-unsigned char long_packge_version_version_and_name_AMS08[] = {0x31, 0x06, 0x00, 0x00, // version number (00.00.06.49)
-                                                              0x41, 0x4D, 0x53, 0x30, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+unsigned char long_packge_version_version_and_name_AMS_lite[] = {
+    0x08, 0x08, 0x00, 0x00,   // version number (00.00.08.08)
+    0x41, 0x4D, 0x53, 0x5F,   // "AMS_"
+    0x46, 0x31, 0x30, 0x32,   // "F102"
+    0x00, 0x00, 0x00, 0x00,   // padding
+    0x00, 0x00, 0x00, 0x00
+};
+
+unsigned char long_packge_version_version_and_name_AMS08[] = {
+    0x3E, 0x06, 0x01, 0x00,   // version number (00.01.06.62)
+    0x41, 0x4D, 0x53, 0x30,   // "AMS0"
+    0x38, 0x00, 0x00, 0x00,   // "8"
+    0x00, 0x00, 0x00, 0x00,   // padding
+    0x00, 0x00, 0x00, 0x00
+};
+
 
 void send_for_long_packge_version(unsigned char *buf, int length)
 {

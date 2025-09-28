@@ -28,7 +28,10 @@ bool is_backing_out = false;
 uint64_t Assist_filament_time[4] = {0, 0, 0, 0};
 uint64_t Assist_send_time = 1200; // 仅触发外侧后，送料时长
 // 退料距离 单位 MM
-float_t P1X_OUT_filament_meters = 200.0f; // 内置200mm 外置700mm
+#ifndef P1X_OUT_FILAMENT_METERS
+#define P1X_OUT_FILAMENT_METERS 200.0f
+#endif
+float_t P1X_OUT_filament_meters = P1X_OUT_FILAMENT_METERS; // 内置200mm 外置700mm
 float_t last_total_distance[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 初始化退料开始时的距离
 // bool filament_channel_inserted[4]={false,false,false,false};//通道是否插入
 // 使用双微动
@@ -650,6 +653,10 @@ void motor_motion_run(int error)
         if (device_type == BambuBus_AMS_lite)
         {
             motor_motion_switch(); // 调度电机
+            // if (!Prepare_For_filament_Pull_Back(P1X_OUT_filament_meters)) // 取反(返回true)，则代表不需要优先考虑退料，并继续调度电机。
+            // {
+            //     motor_motion_switch(); // 调度电机
+            // }
         }
         else if (device_type == BambuBus_AMS)
         {

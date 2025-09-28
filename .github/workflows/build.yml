@@ -1,0 +1,50 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Get version
+        id: vars
+        run: |
+          # Use run_number as default version
+          echo "VERSION=v${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          # If you prefer tags, uncomment below and push tags as releases
+          # if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          #   echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          # fi
+
+      - name: Build all firmware variants
+        run: |
+          mkdir out
+          for env in fw-INT-A fw-EXT-A fw-INT-B fw-EXT-B fw-INT-C fw-EXT-C fw-INT-D fw-EXT-D; do
+            echo "🔨 Building $env with version $VERSION"
+            pio run -e $env --target clean
+            pio run -e $env --silent \
+              -DVERSION_STR="\"${VERSION}\""
+            cp .pio/build/$env/firmware.bin out/fw-${env}-${VERSION}.bin
+          done
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ env.VERSION }}
+          path: out/fw-*.bin
