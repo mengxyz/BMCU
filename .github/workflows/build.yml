@@ -9,34 +9,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [fw-INT-A, fw-EXT-A, fw-INT-B, fw-EXT-B, fw-INT-C, fw-EXT-C, fw-INT-D, fw-EXT-D]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Install PlatformIO
-        run: pip install platformio
+      - run: pip install platformio
 
       - name: Get version
         run: echo "VERSION=v${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
-      - name: Build all firmware variants
+      - name: Build ${{ matrix.env }}
         run: |
-          mkdir out
-          for env in fw-INT-A fw-EXT-A fw-INT-B fw-EXT-B fw-INT-C fw-EXT-C fw-INT-D fw-EXT-D; do
-            echo "🔨 Building $env"
-            pio run -e $env --target clean
-            pio run -e $env --silent
-            cp .pio/build/$env/firmware.bin out/fw-${env}-${VERSION}.bin
-          done
+          pio run -e ${{ matrix.env }} --target clean
+          pio run -e ${{ matrix.env }}
+          cp .pio/build/${{ matrix.env }}/firmware.bin fw-${{ matrix.env }}-${VERSION}.bin
 
-      - name: Upload firmware artifacts
+      - name: Upload artifact ${{ matrix.env }}
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ env.VERSION }}
-          path: out/fw-*.bin
+          name: ${{ matrix.env }}
+          path: fw-${{ matrix.env }}-${{ env.VERSION }}.bin
