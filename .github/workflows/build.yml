@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # important: fetch all tags
+          fetch-depth: 0   # fetch all tags so git describe works
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,9 +37,8 @@ jobs:
           pio run -e ${{ matrix.env }}
           cp .pio/build/${{ matrix.env }}/firmware.bin fw-${{ matrix.env }}-${VERSION}.bin
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifact ${{ matrix.env }}
+        uses: actions/upload-artifact@v4
         with:
-          files: fw-${{ matrix.env }}-${VERSION}.bin
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ matrix.env }}-${{ env.VERSION }}
+          path: fw-${{ matrix.env }}-${{ env.VERSION }}.bin
