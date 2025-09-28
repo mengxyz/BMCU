@@ -39,7 +39,7 @@ jobs:
             echo "🔨 Building $env with version $VERSION"
             pio run -e $env --target clean
             pio run -e $env --silent \
-              -DVERSION_STR="\"${VERSION}\""
+              --project-option="build_flags=-DVERSION_STR=\"${VERSION}\""
             cp .pio/build/$env/firmware.bin out/fw-${env}-${VERSION}.bin
           done
 
