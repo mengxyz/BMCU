@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [fw-INT-A, fw-EXT-A, fw-INT-B, fw-EXT-B, fw-INT-C, fw-EXT-C, fw-INT-D, fw-EXT-D]
+        env: [fw-INT-A, fw-EXT-A, fw-INT-B, fw-EXT-B, fw-INT-C, fw-EXT-C, fw-INT-D, fw-EXT-D, fw-EXT-750-A, fw-EXT-750-B, fw-EXT-750-C, fw-EXT-750-D, fw-EXT-800-A, fw-EXT-800-B, fw-EXT-800-C, fw-EXT-800-D]
 
     steps:
       - uses: actions/checkout@v4
