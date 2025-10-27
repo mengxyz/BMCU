@@ -492,7 +492,12 @@ BambuBus_package_type get_packge_type(unsigned char *buf, int length)
         }
         else if (printer_data_long.target_address == BambuBus_AMS_lite)
         {
+            // Skip AMS  lite check for fw 01.07
+            #ifdef SKIP_AMS_LITE
+            return BambuBus_package_type::NONE;
+            #else
             BambuBus_address = BambuBus_AMS_lite;
+            #endif
         }
 
         switch (printer_data_long.type)
@@ -1097,7 +1102,7 @@ void send_for_long_packge_serial_number(unsigned char *buf, int length)
 }
 
 unsigned char long_packge_version_version_and_name_AMS_lite[] = {
-    0x08, 0x08, 0x00, 0x00,   // version number (00.00.08.08)
+    0x0F, 0x08, 0x00, 0x00,   // version number (00.00.08.08)
     0x41, 0x4D, 0x53, 0x5F,   // "AMS_"
     0x46, 0x31, 0x30, 0x32,   // "F102"
     0x00, 0x00, 0x00, 0x00,   // padding
@@ -1105,7 +1110,7 @@ unsigned char long_packge_version_version_and_name_AMS_lite[] = {
 };
 
 unsigned char long_packge_version_version_and_name_AMS08[] = {
-    0x3E, 0x06, 0x01, 0x00,   // version number (00.01.06.62)
+    0x53, 0x06, 0x01, 0x00,   // version number (00.01.06.62)
     0x41, 0x4D, 0x53, 0x30,   // "AMS0"
     0x38, 0x00, 0x00, 0x00,   // "8"
     0x00, 0x00, 0x00, 0x00,   // padding

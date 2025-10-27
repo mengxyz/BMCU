@@ -37,6 +37,14 @@ float_t last_total_distance[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 初始化退料开
 // 使用双微动
 bool is_two = true;
 
+constexpr float BASE_VCC      = 3.3f;
+
+inline void compute_pull_thresholds(float vcc) {
+  float scale = vcc / BASE_VCC;
+  PULL_voltage_up     = PULL_voltage_up   * scale;
+  PULL_voltage_down   = PULL_voltage_down * scale;
+}
+
 void MC_PULL_ONLINE_read()
 {
     float *data = ADC_DMA_get_value();
@@ -1021,6 +1029,10 @@ void MOTOR_init()
 extern void RGB_update();
 void Motion_control_init() // 初始化所有运动和传感器
 {
+    // Custom VCC
+    #ifdef C_BASE_VCC
+    compute_pull_thresholds(C_BASE_VCC);
+    #endif
     MC_PULL_ONLINE_init();
     MC_PULL_ONLINE_read();
     MOTOR_init();
