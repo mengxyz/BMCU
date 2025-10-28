@@ -43,6 +43,12 @@ inline void compute_pull_thresholds(float vcc) {
   float scale = vcc / BASE_VCC;
   PULL_voltage_up     = PULL_voltage_up   * scale;
   PULL_voltage_down   = PULL_voltage_down * scale;
+  #ifdef V_UP_OFFSET
+  PULL_voltage_up += V_UP_OFFSET;
+  #endif
+  #ifdef V_DN_OFFSET
+  PULL_voltage_down += V_DN_OFFSET;
+  #endif
 }
 
 void MC_PULL_ONLINE_read()
