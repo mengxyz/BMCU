@@ -6,9 +6,6 @@ uint32_t AS5600_SDA[] = {PD0, PC15, PC14, PC13};
 #define AS5600_PI 3.1415926535897932384626433832795
 #define speed_filter_k 100
 float speed_as5600[4] = {0, 0, 0, 0};
-// extra tension demand for the active printing channel (in volts)
-constexpr float USED_CH_PRESSURE_DELTA = 0.05f; // e.g. 50mV, tune later
-
 
 void MC_PULL_ONLINE_init()
 {
@@ -40,40 +37,7 @@ float_t last_total_distance[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 初始化退料开
 // 使用双微动
 bool is_two = true;
 
-// ---- Feed speed tuning ----
-// original "fast" values (for reference)
-float MC_SEND_SPEED_FAST  = 50.0f;  // 原始送料目标速度
-float MC_SEND_SPEED_SLOW  = 3.0f;   // 原始慢速送料目标速度
-
-// custom loading speeds (use these instead of hard-coded 50 / 3)
-// float MC_SEND_SPEED_LOAD       = 25.0f; // 进料（need_send_out）时的目标速度
-// float MC_SEND_SPEED_LOAD_SLOW  = 2.0f;  // 刚咬合阶段的慢速送料
-float MC_SEND_SPEED_LOAD       = 50.0f; // 进料（need_send_out）时的目标速度
-float MC_SEND_SPEED_LOAD_SLOW  = 10.0f;  // 刚咬合阶段的慢速送料
-
-// 辅助进料 PWM（仅外侧微动触发时）
-constexpr float ASSIST_FEED_PWM = 400.0f;
-
 constexpr float BASE_VCC      = 3.3f;
-constexpr float ASSIST_SPEED_MM_S      = 3.0f;
-constexpr float PRESS_LOW              = 1.65f;
-constexpr float PRESS_HIGH             = 1.70f;
-
-#ifdef E_PULL_CENTER
-constexpr float PULL_CENTER      = E_PULL_CENTER;
-#else
-constexpr float PULL_CENTER      = 1.7f;
-#endif
-#ifdef E_PUSH_DELTA_START
-constexpr float PUSH_DELTA_START      = E_PUSH_DELTA_START;
-#else
-constexpr float PUSH_DELTA_START      = 0.02f;
-#endif
-#ifdef E_PULL_DELTA_START
-constexpr float PULL_DELTA_START      = E_PULL_DELTA_START;
-#else
-constexpr float PULL_DELTA_START      = 0.04;
-#endif
 
 inline void compute_pull_thresholds(float vcc) {
   float scale = vcc / BASE_VCC;
@@ -363,8 +327,8 @@ public:
             if (Assist_send_filament[CHx] && is_two)
             { // 允许状态，尝试辅助进料
                 if (MC_ONLINE_key_stu[CHx] == 2)
-                {   // 触发外侧微动
-                    x = -dir * ASSIST_FEED_PWM; // 驱动送料（原来是 666）
+                {                   // 触发外侧微动
+                    x = -dir * 666; // 驱动送料
                 }
                 if (MC_ONLINE_key_stu[CHx] == 1)
                 { // 同时触发双微动，准备停机
@@ -381,7 +345,7 @@ public:
                     else
                     {
                         // 驱动送料
-                        x = -dir * ASSIST_FEED_PWM;       // 原来是 666
+                        x = -dir * 666;
                     }
                 }
             }
@@ -401,63 +365,22 @@ public:
         }
         else if (MC_ONLINE_key_stu[CHx] != 0) // 通道在运行状态，并且有耗材
         {
-            // if (motion == filament_motion_enum::filament_motion_pressure_ctrl_on_use) // 在使用状态
-            // {
-            //     if (pull_state_old) { // 首次进入使用中，不触发后退，冲刷会让缓冲归位.
-            //         if (MC_PULL_stu_raw[CHx] < 1.55){
-            //             pull_state_old = false; // 检测到耗材已处于低压力。
-            //         }
-            //     } else {
-            //         if (MC_PULL_stu_raw[CHx] < 1.65)
-            //         {
-            //             x = _get_x_by_pressure(MC_PULL_stu_raw[CHx], 1.65, time_E, pressure_control_enum::less_pressure);
-            //         }
-            //         else if (MC_PULL_stu_raw[CHx] > 1.7)
-            //         {
-            //             x = _get_x_by_pressure(MC_PULL_stu_raw[CHx], 1.7, time_E, pressure_control_enum::over_pressure);
-            //         }
-            //     }
-            // }
             if (motion == filament_motion_enum::filament_motion_pressure_ctrl_on_use) // 在使用状态
             {
-                float v = MC_PULL_stu_raw[CHx];
-
-                float x_p = 0.0f;
-
-                if (pull_state_old)
-                {
-                    // ช่วงแรกที่เพิ่งเข้า on_use: รอให้ extruder ดึงให้แรงลงมาก่อน
-                    // เหมือนเดิม: ถ้าต่ำกว่า level หนึ่งค่อยเริ่ม active control
-                    if (v < (PULL_CENTER - 0.10f))   // 1.55 ถ้า center=1.65
-                    {
-                        pull_state_old = false;
+                if (pull_state_old) { // 首次进入使用中，不触发后退，冲刷会让缓冲归位.
+                    if (MC_PULL_stu_raw[CHx] < 1.55){
+                        pull_state_old = false; // 检测到耗材已处于低压力。
                     }
-                    // ระหว่างนี้ x_p = 0 → ไม่ดัน, ไม่ดึง
+                } else {
+                    if (MC_PULL_stu_raw[CHx] < 1.65)
+                    {
+                        x = _get_x_by_pressure(MC_PULL_stu_raw[CHx], 1.65, time_E, pressure_control_enum::less_pressure);
+                    }
+                    else if (MC_PULL_stu_raw[CHx] > 1.7)
+                    {
+                        x = _get_x_by_pressure(MC_PULL_stu_raw[CHx], 1.7, time_E, pressure_control_enum::over_pressure);
+                    }
                 }
-                else
-                {
-                    // *** เงื่อนไข “buffer ถูกกดแล้ว” ***
-                    // ถ้า v ต่ำกว่า PULL_CENTER - PUSH_DELTA_START = extruder ดึงจน buffer ขยับจริงแล้ว
-                    if (v < (PULL_CENTER - PUSH_DELTA_START))
-                    {
-                        // แรงดึงต่ำกว่ากลาง → ช่วย "ดัน" เส้นเข้าไป (less_pressure)
-                        x_p = _get_x_by_pressure(v,
-                                                PULL_CENTER - PUSH_DELTA_START,
-                                                time_E,
-                                                pressure_control_enum::less_pressure);
-                    }
-                    // ถ้า v สูงกว่า PULL_CENTER + PULL_DELTA_START = buffer ถูกดันกลับมากไป → ช่วยผ่อน
-                    else if (v > (PULL_CENTER + PULL_DELTA_START))
-                    {
-                        x_p = _get_x_by_pressure(v,
-                                                PULL_CENTER + PULL_DELTA_START,
-                                                time_E,
-                                                pressure_control_enum::over_pressure);
-                    }
-                    // ถ้าอยู่ในช่วงกลางๆ → ไม่ทำอะไร (x_p = 0)
-                }
-
-                x = x_p;   // ไม่มี base feed แล้ว ให้ขยับเฉพาะตอน sensor บอกว่าถูกกดจริง
             }
             else
             {
@@ -469,62 +392,25 @@ public:
                 }
                 if (motion == filament_motion_enum::filament_motion_send) // 送料中
                 {
-                    #ifdef SKIP_AMS_LITE
-                    if (MC_PULL_stu_raw[CHx] < 1.8f) // 压力主动到1.8V位置
-                        speed_set = MC_SEND_SPEED_LOAD; // was 50
-                    else
-                        speed_set = 0;                  // 原版这里是 10
-                    #else
                     if (device_type == BambuBus_AMS_lite)
                     {
-                        if (MC_PULL_stu_raw[CHx] < 1.8f) // 压力主动到1.8V位置
-                            speed_set = MC_SEND_SPEED_LOAD; // was 50
+                        if (MC_PULL_stu_raw[CHx] < 1.8) // 压力主动到1.8V位置
+                            speed_set = 50;
                         else
-                            speed_set = 0;                  // 原版这里是 10
+                            speed_set = 0; // 原版这里是 10
                     }
                     else
                     {
-                        // P 系也用降低后的加载速度
-                        speed_set = MC_SEND_SPEED_LOAD;     // was 50
+                        speed_set = 50; // P系全力以赴
                     }
-                    #endif
                 }
-                // if (motion == filament_motion_enum::filament_motion_send) // 送料中
-                // {
-                //     float pull_v = MC_PULL_stu_raw[CHx];
-
-                //     // 新策略:
-                //     // < 1.70V  : 压力很小 → 全速进 (45mm/s)
-                //     // 1.70–1.78: 过渡区 → 从快速线性减到慢速
-                //     // 1.78–1.82: 高压力 → 慢速蠕动 (18mm/s)
-                //     // ≥ 1.82V  : 认为够紧 → 停止进料，避免再硬挤打滑
-
-                //     if (pull_v >= 1.82f) {
-                //         // 已经非常紧了，停止送料
-                //         speed_set = 0.0f;
-                //     }
-                //     else if (pull_v >= 1.78f) {
-                //         // 高压力区：使用慢速送料
-                //         speed_set = MC_SEND_SPEED_LOAD_SLOW;
-                //     }
-                //     else if (pull_v >= 1.70f) {
-                //         // 过渡区：从快速渐变到慢速
-                //         float t = (pull_v - 1.70f) / (1.78f - 1.70f); // 0 → 1
-                //         speed_set = MC_SEND_SPEED_LOAD * (1.0f - t) + MC_SEND_SPEED_LOAD_SLOW * t;
-                //     }
-                //     else {
-                //         // 压力很低 → 全速送料
-                //         speed_set = MC_SEND_SPEED_LOAD;
-                //     }
-                // }
-
                 if (motion == filament_motion_enum::filament_motion_slow_send) // 要求缓慢送料
                 {
-                    speed_set = MC_SEND_SPEED_LOAD_SLOW;    // was 3
+                    speed_set = 3;
                 }
                 if (motion == filament_motion_enum::filament_motion_pull) // 回抽
                 {
-                    speed_set = -50; // 回抽速度保持原样，如需调节也可抽成变量
+                    speed_set = -50;
                 }
                 x = dir * PID_speed.caculate(now_speed - speed_set, time_E);
             }

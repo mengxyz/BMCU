@@ -41,7 +41,7 @@ output example
 Flash command
 
 ```bash
-./wchisp -s -p /dev/tty.wchusbserial14710 -b Baud1m config unprotect
+./wchisp --serial --port /dev/cu.wchusbserial14710 --baudrate Baud1m flash 'PATH'
 ```
 
 output example

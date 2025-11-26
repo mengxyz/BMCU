@@ -55,6 +55,8 @@ extern "C"
     extern void Bambubus_set_need_to_save();
     extern int get_now_filament_num();
     extern uint16_t get_now_BambuBus_device_type();
+    extern uint8_t get_now_BambuBus_num();
+    extern uint16_t get_now_BambuBus_addr();
     extern void reset_filament_meters(int num);
     extern void add_filament_meters(int num, float meters);
     extern float get_filament_meters(int num);

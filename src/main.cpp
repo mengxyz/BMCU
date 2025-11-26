@@ -13,6 +13,10 @@ extern void debug_send_run();
 #define LED_PB0_NUM 2
 #define LED_PD1_NUM 1
 
+#ifndef MB_BRG
+#define MB_BRG 35
+#endif
+
 // 通道RGB对象，strip_channel[Chx]，0~4为PA11/PA8/PB1/PB0
 Adafruit_NeoPixel strip_channel[4] = {
     Adafruit_NeoPixel(LED_PA11_NUM, PA11, NEO_GRB + NEO_KHZ800),
@@ -26,7 +30,7 @@ Adafruit_NeoPixel strip_PD1(LED_PD1_NUM, PD1, NEO_GRB + NEO_KHZ800);
 void RGB_Set_Brightness() {
     // 亮度值 0-255
     // 主板亮度
-    strip_PD1.setBrightness(35);
+    strip_PD1.setBrightness(MB_BRG);
     // 通道1 RGB
     strip_channel[0].setBrightness(15);
     // 通道2 RGB
@@ -112,7 +116,7 @@ void Set_MC_RGB(uint8_t channel, int num, uint8_t R, uint8_t G, uint8_t B)
 }
 
 bool MC_STU_ERROR[4] = {false, false, false, false};
-void Show_SYS_RGB(int BambuBUS_status)
+void Show_SYS_RGB(int BambuBUS_status, uint16_t BambuBus_address, uint8_t BambuBus_AMS_num)
 {
     // 更新主板RGB灯
     if (BambuBUS_status == -1) // 离线
@@ -122,8 +126,30 @@ void Show_SYS_RGB(int BambuBUS_status)
     }
     else if (BambuBUS_status == 0) // 在线
     {
+        #ifdef SYNC_C_COLOR
+        if(BambuBus_address == BambuBus_AMS_lite) {
+            strip_PD1.setPixelColor(0, strip_PD1.Color(8, 9, 9)); // 白色
+        }
+        // else {
+        //     strip_PD1.setPixelColor(0, strip_PD1.Color(0, 0, 255)); // 白色
+        //
+        else if(BambuBus_address == BambuBus_AMS && BambuBus_AMS_num == 0) {
+            strip_PD1.setPixelColor(0, strip_PD1.Color(255, 255, 0));  // yello
+        }
+        else if(BambuBus_address == BambuBus_AMS && BambuBus_AMS_num == 1) {
+            strip_PD1.setPixelColor(0, strip_PD1.Color(0, 255, 0)); // green
+        }
+        else if(BambuBus_address == BambuBus_AMS && BambuBus_AMS_num == 2) {
+            strip_PD1.setPixelColor(0, strip_PD1.Color(0, 0, 255)); // blue
+        }
+        else if(BambuBus_address == BambuBus_AMS && BambuBus_AMS_num == 3) {
+            strip_PD1.setPixelColor(0, strip_PD1.Color(255, 0, 255)); // purple 
+        }
+        #else
         strip_PD1.setPixelColor(0, strip_PD1.Color(8, 9, 9)); // 白色
+        #endif
         strip_PD1.show();
+        
     }
     // 更新错误通道，亮起红灯
     for (int i = 0; i < 4; i++)
@@ -147,6 +173,8 @@ void loop()
         static int error = 0;
         bool motion_can_run = false;
         uint16_t device_type = get_now_BambuBus_device_type();
+        uint8_t b_num = get_now_BambuBus_num();
+        uint16_t b_addr = get_now_BambuBus_addr();
         if (stu != BambuBus_package_type::NONE) // have data/offline
         {
             motion_can_run = true;
@@ -167,7 +195,7 @@ void loop()
             static unsigned long last_sys_rgb_time = 0;
             unsigned long now = get_time64();
             if (now - last_sys_rgb_time >= 3000) {
-                Show_SYS_RGB(error);
+                Show_SYS_RGB(error, b_addr, b_num);
                 last_sys_rgb_time = now;
             }
         }

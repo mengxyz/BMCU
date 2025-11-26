@@ -74,6 +74,13 @@ uint16_t get_now_BambuBus_device_type()
     return BambuBus_address;
 }
 
+uint8_t get_now_BambuBus_num() {
+    return BambuBus_AMS_num;
+}
+uint16_t get_now_BambuBus_addr() {
+    return BambuBus_address;
+}
+
 void reset_filament_meters(int num)
 {
     if (num < 4)
