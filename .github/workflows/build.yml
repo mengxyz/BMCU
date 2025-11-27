@@ -31,7 +31,7 @@ jobs:
 
       - name: Build all fw-* environments
         run: |
-          python3 build_fw_envs.py
+          python3 build.py
           mkdir -p release
           # rename output files to include VERSION 
           for f in out/*.bin; do
