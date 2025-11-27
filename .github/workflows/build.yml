@@ -3,25 +3,22 @@ name: Build Firmware
 on:
   push:
     tags:
-      - "v*"   # only on tags
+      - "v*"
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        env: [fw-INT-A, fw-EXT-A, fw-INT-B, fw-EXT-B, fw-INT-C, fw-EXT-C, fw-INT-D, fw-EXT-D, fw-EXT-750-A, fw-EXT-750-B, fw-EXT-750-C, fw-EXT-750-D, fw-EXT-800-A, fw-EXT-800-B, fw-EXT-800-C, fw-EXT-800-D, fw-EXT-A-SKIP_AMS_LITE, fw-EXT-B-SKIP_AMS_LITE, fw-EXT-C-SKIP_AMS_LITE, fw-EXT-D-SKIP_AMS_LITE]
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # fetch all tags so git describe works
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - run: pip install platformio
 
@@ -32,13 +29,18 @@ jobs:
           VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Build ${{ matrix.env }}
+      - name: Build all fw-* environments
         run: |
-          pio run -e ${{ matrix.env }}
-          cp .pio/build/${{ matrix.env }}/firmware.bin fw-${{ matrix.env }}-${VERSION}.bin
+          python3 build_fw_envs.py
+          mkdir -p release
+          # rename output files to include VERSION 
+          for f in out/*.bin; do
+            base=$(basename "$f" .bin)
+            cp "$f" "release/${base}-${VERSION}.bin"
+          done
 
-      - name: Upload artifact ${{ matrix.env }}
+      - name: Upload firmware bundle
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.env }}-${{ env.VERSION }}
-          path: fw-${{ matrix.env }}-${{ env.VERSION }}.bin
+          name: firmware-${{ env.VERSION }}
+          path: release/*.bin

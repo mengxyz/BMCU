@@ -55,7 +55,7 @@ float MC_SEND_SPEED_LOAD_SLOW  = 10.0f;  // 刚咬合阶段的慢速送料
 constexpr float ASSIST_FEED_PWM = 400.0f;
 
 constexpr float BASE_VCC      = 3.3f;
-constexpr float ASSIST_SPEED_MM_S      = 3.0f;
+constexpr float ASSIST_SPEED_MM_S      = 5.0f;
 constexpr float PRESS_LOW              = 1.65f;
 constexpr float PRESS_HIGH             = 1.70f;
 
