@@ -12,7 +12,7 @@ int MC_PULL_stu[4] = {0, 0, 0, 0};
 float MC_ONLINE_key_stu_raw[4] = {0, 0, 0, 0};
 int MC_ONLINE_key_stu[4] = {0, 0, 0, 0};
 bool filament_channel_inserted[4] = {false, false, false, false}; // 通道是否插入
-#define is_two true
+
 void MC_PULL_ONLINE_init()
 {
     uint8_t online_stu[4];
@@ -91,29 +91,7 @@ void MC_PULL_ONLINE_read()
     for (int i = 0; i < 4; i++)
     {
 
-        // if (MC_PULL_stu_raw[i] > 1.85) // 大于1.85V,表示压力过高
-        // {
-        //     MC_PULL_stu[i] = 1;
-        // }
-        // else if (MC_PULL_stu_raw[i] < 1.45) // 小于1.45V，表示压力过低
-        // {
-        //     MC_PULL_stu[i] = -1;
-        // }
-        // else // 1.45~1.85之间，在正常误差范围内，无需动作
-        // {
-        //     MC_PULL_stu[i] = 0;
-        // }
-
-        // if ((MC_ONLINE_key_stu_raw[i] > 1.65) && (filament_channel_inserted[i])) // 大于1.65V，为高电平
-        // {
-        //     MC_ONLINE_key_stu[i] = 1;
-        // }
-        // else // 小于1.65V，为低电平
-        // {
-        //     MC_ONLINE_key_stu[i] = 0;
-        // }
-
-         if (MC_PULL_stu_raw[i] > 1.85) // 大于1.85V,表示压力过高
+        if (MC_PULL_stu_raw[i] > 1.85) // 大于1.85V,表示压力过高
         {
             MC_PULL_stu[i] = 1;
         }
@@ -121,45 +99,18 @@ void MC_PULL_ONLINE_read()
         {
             MC_PULL_stu[i] = -1;
         }
-        else // 1.4~1.7之间，在正常误差范围内，无需动作
+        else // 1.45~1.85之间，在正常误差范围内，无需动作
         {
             MC_PULL_stu[i] = 0;
         }
-        /*在线状态*/
 
-        // 耗材在线判断
-        if (is_two == false)
+        if ((MC_ONLINE_key_stu_raw[i] > 1.65) && (filament_channel_inserted[i])) // 大于1.65V，为高电平
         {
-            // 大于1.65V，为耗材在线，高电平.
-            if (MC_ONLINE_key_stu_raw[i] > 1.65)
-            {
-                MC_ONLINE_key_stu[i] = 1;
-            }
-            else
-            {
-                MC_ONLINE_key_stu[i] = 0;
-            }
+            MC_ONLINE_key_stu[i] = 1;
         }
-        else
+        else // 小于1.65V，为低电平
         {
-            // DEBUG_MY(MC_ONLINE_key_stu_raw);
-            // 双微动
-            if (MC_ONLINE_key_stu_raw[i] < 0.6f)
-            { // 小于则离线.
-                MC_ONLINE_key_stu[i] = 0;
-            }
-            else if ((MC_ONLINE_key_stu_raw[i] < 1.7f) & (MC_ONLINE_key_stu_raw[i] > 1.4f))
-            { // 仅触发外侧微动，需辅助进料
-                MC_ONLINE_key_stu[i] = 2;
-            }
-            else if (MC_ONLINE_key_stu_raw[i] > 1.7f)
-            { // 双微动同时触发, 在线状态
-                MC_ONLINE_key_stu[i] = 1;
-            }
-            else if (MC_ONLINE_key_stu_raw[i] < 1.4f)
-            { // 仅触发内侧微动 , 需确认是缺料还是抖动.
-                MC_ONLINE_key_stu[i] = 3;
-            }
+            MC_ONLINE_key_stu[i] = 0;
         }
     }
 }
