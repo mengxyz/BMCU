@@ -1,0 +1,46 @@
+name: Build Firmware
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install platformio
+
+      - name: Get latest tag
+        id: get_version
+        run: |
+          git fetch --tags
+          VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build all fw-* environments
+        run: |
+          python3 build.py
+          mkdir -p release
+          # rename output files to include VERSION 
+          for f in out/*.bin; do
+            base=$(basename "$f" .bin)
+            cp "$f" "release/${base}-${VERSION}.bin"
+          done
+
+      - name: Upload firmware bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ env.VERSION }}
+          path: release/*.bin

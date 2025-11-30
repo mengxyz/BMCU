@@ -1,0 +1,106 @@
+#include "_bus_hardware.h"
+#include <stdio.h>
+crc8 _bus_crc_8(0x39, 0x66, 0);
+uint16_t bus_host_device_type=0x0000;
+
+DMA_InitTypeDef bus_uart1_dma_init_structure;
+void bus_uart1_init();
+void bus_uart1_dma_send(uint8_t *data, uint16_t length);
+
+
+_bus_port_deal bus_port_to_host;
+
+#define uart1_port_irq(data) bus_port_to_host.irq(data)
+#define uart1_port_idle bus_port_to_host.idle
+#define bus_port_to_host_send_func bus_uart1_dma_send
+
+void bus_init()
+{
+    bus_port_to_host.init(bus_port_to_host_send_func);
+
+    bus_uart1_init();
+}
+
+void bus_uart1_init()
+{
+    GPIO_InitTypeDef GPIO_InitStructure = {0};
+    USART_InitTypeDef USART_InitStructure = {0};
+    NVIC_InitTypeDef NVIC_InitStructure = {0};
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+
+    /* USART1 TX-->A.9   RX-->A.10   DE-->A.12*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9; // TX
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10; // RX
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12; // DE
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOA->BCR = GPIO_Pin_12;
+
+    USART_InitStructure.USART_BaudRate = 1250000;
+    USART_InitStructure.USART_WordLength = USART_WordLength_9b;
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;
+    USART_InitStructure.USART_Parity = USART_Parity_Even;
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
+
+    USART_Init(USART1, &USART_InitStructure);
+    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+    USART_ITConfig(USART1, USART_IT_TC, ENABLE);
+
+    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    // Configure DMA1 channel 4 for USART1 TX
+    bus_uart1_dma_init_structure.DMA_PeripheralBaseAddr = (uint32_t)&USART1->DATAR;
+    bus_uart1_dma_init_structure.DMA_MemoryBaseAddr = (uint32_t)0;
+    bus_uart1_dma_init_structure.DMA_DIR = DMA_DIR_PeripheralDST;
+    bus_uart1_dma_init_structure.DMA_Mode = DMA_Mode_Normal;
+    bus_uart1_dma_init_structure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+    bus_uart1_dma_init_structure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+    bus_uart1_dma_init_structure.DMA_Priority = DMA_Priority_VeryHigh;
+    bus_uart1_dma_init_structure.DMA_M2M = DMA_M2M_Disable;
+    bus_uart1_dma_init_structure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+    bus_uart1_dma_init_structure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+    bus_uart1_dma_init_structure.DMA_BufferSize = 0;
+    DMA_Init(DMA1_Channel4, &bus_uart1_dma_init_structure);
+
+    USART_Cmd(USART1, ENABLE);
+}
+
+void bus_uart1_dma_send(unsigned char *data, uint16_t length)
+{
+    // Configure DMA1 channel 4 for USART1 TX
+    DMA1_Channel4->CFGR &= (uint16_t)(~DMA_CFGR1_EN);   //关闭通道
+    DMA1_Channel4->MADDR = (uint32_t)data; // 更新内存地址
+    DMA1_Channel4->CNTR = length;        // 更新传输长度
+    DMA1_Channel4->CFGR |= DMA_CFGR1_EN;    // 重新使能
+    GPIOA->BSHR = GPIO_Pin_12;
+    // Enable USART1 DMA send
+    USART1->CTLR3 |= USART_DMAReq_Tx;
+}
+
+extern "C" void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+void USART1_IRQHandler(void)
+{
+    if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) // USART1 Rx recv data
+    {
+        uart1_port_irq(USART_ReceiveData(USART1));
+    }
+    if (USART_GetITStatus(USART1, USART_IT_TC) != RESET) // DMA-USART1 Tx send over
+    {
+        USART_ClearITPendingBit(USART1, USART_IT_TC);
+        GPIOA->BCR = GPIO_Pin_12;
+    }
+}
